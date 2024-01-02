@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .calculator {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+
+        #chart {
+            width: 300px;
+            height: 300px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+    <title>EMI Calculator</title>
+</head>
+<body>
+
+<div class="calculator">
+    <label for="principal">Loan Amount (Principal)</label>
+    <input type="number" id="principal" required>
+
+    <label for="interest_rate">Annual Interest Rate (%)</label>
+    <input type="number" id="interest_rate" required>
+
+    <label for="tenure">Loan Tenure (Years)</label>
+    <input type="number" id="tenure" required>
+
+    <button onclick="calculateEMI()">Calculate EMI</button>
+
+    <div id="result"></div>
+
+    <canvas id="chart"></canvas>
+</div>
+
+<script>
+    function calculateEMI() {
+        const principal = parseFloat(document.getElementById('principal').value);
+        const interestRate = parseFloat(document.getElementById('interest_rate').value);
+        const tenure = parseFloat(document.getElementById('tenure').value);
+
+        const interestRateMonthly = interestRate / 100 / 12;
+        const tenureMonths = tenure * 12;
+
+        const emi = (principal * interestRateMonthly * (Math.pow((1 + interestRateMonthly), tenureMonths))) /
+            (Math.pow((1 + interestRateMonthly), tenureMonths) - 1);
+
+        const totalPayment = emi * tenureMonths;
+        const totalInterest = totalPayment - principal;
+
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = `<p>EMI: ${emi.toFixed(2)}</p>
+                               <p>Total Payment: ${totalPayment.toFixed(2)}</p>
+                               <p>Total Interest: ${totalInterest.toFixed(2)}</p>`;
+
+        const chartDiv = document.getElementById('chart');
+        chartDiv.style.display = 'block';
+
+        const ctx = chartDiv.getContext('2d');
+        ctx.clearRect(0, 0, chartDiv.width, chartDiv.height);
+
+        const chartData = [principal, totalInterest];
+        const colors = ['#36a2eb', '#ffcd56'];
+
+        let startAngle = 0;
+        chartData.forEach((value, i) => {
+            const sliceAngle = (value / (principal + totalInterest)) * 2 * Math.PI;
+            const sliceMidAngle = startAngle + sliceAngle / 2;
+
+            // Draw the pie chart slice
+            ctx.fillStyle = colors[i];
+            ctx.beginPath();
+            ctx.moveTo(chartDiv.width / 2, chartDiv.height / 2);
+            ctx.arc(chartDiv.width / 2, chartDiv.height / 2, chartDiv.height / 2, startAngle, startAngle + sliceAngle);
+            ctx.lineTo(chartDiv.width / 2, chartDiv.height / 2);
+            ctx.fill();
+
+            // Draw the text label
+            const labelX = chartDiv.width / 2 + Math.cos(sliceMidAngle) * (chartDiv.width / 2 * 0.8);
+            const labelY = chartDiv.height / 2 + Math.sin(sliceMidAngle) * (chartDiv.height / 2 * 0.8);
+            ctx.fillStyle = '#000';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(value.toFixed(2), labelX, labelY);
+
+            startAngle += sliceAngle;
+        });
+    }
+</script>
+
+</body>
+</html>
